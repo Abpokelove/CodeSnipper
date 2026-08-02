@@ -1,0 +1,318 @@
+:root {
+  font-family: Inter, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #f7f7fb;
+  background: #060816;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(120, 119, 198, 0.35), transparent 24%),
+    linear-gradient(135deg, #060816 0%, #121b39 50%, #05070f 100%);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card,
+.dashboard {
+  width: min(1120px, 100%);
+  background: rgba(7, 12, 24, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+  border-radius: 24px;
+  backdrop-filter: blur(22px);
+}
+
+.auth-card {
+  padding: 48px;
+  text-align: center;
+  max-width: 560px;
+}
+
+.accent-pill,
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.2);
+  color: #8ec9ff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.auth-card h1 {
+  margin: 18px 0 12px;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+}
+
+.auth-card p {
+  color: #c0c7db;
+  margin-bottom: 24px;
+}
+
+.google-btn,
+.primary-btn,
+.secondary-btn,
+.ghost-btn,
+.danger-btn {
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.google-btn:hover,
+.primary-btn:hover,
+.secondary-btn:hover,
+.ghost-btn:hover,
+.danger-btn:hover {
+  transform: translateY(-1px);
+}
+
+.google-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: white;
+  color: #1a1f2e;
+  padding: 12px 20px;
+  font-weight: 700;
+  box-shadow: 0 12px 30px rgba(255, 255, 255, 0.12);
+}
+
+.google-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4285f4, #34a853);
+  color: white;
+  font-weight: 800;
+}
+
+.auth-card small {
+  display: block;
+  margin-top: 16px;
+  color: #8b95af;
+}
+
+.dashboard {
+  padding: 24px;
+}
+
+.topbar,
+.panel-heading,
+.form-actions,
+.card-actions,
+.snippet-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.topbar {
+  margin-bottom: 18px;
+}
+
+.topbar h2 {
+  margin: 6px 0 0;
+  font-size: 1.35rem;
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 10px 14px;
+  border-radius: 999px;
+}
+
+.user-chip img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.user-chip strong,
+.user-chip span {
+  display: block;
+}
+
+.user-chip span {
+  color: #9da8bf;
+  font-size: 0.8rem;
+}
+
+.status-banner {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(46, 160, 101, 0.16);
+  color: #b9f1ce;
+  margin-bottom: 20px;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 20px;
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.panel h3 {
+  margin: 6px 0 0;
+}
+
+.snippet-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #dfe7ff;
+  font-weight: 600;
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(4, 7, 17, 0.72);
+  color: #f4f7ff;
+  padding: 12px 14px;
+  border-radius: 14px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.code-area {
+  font-family: 'Fira Code', 'Consolas', monospace;
+  min-height: 190px;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  padding: 10px 16px;
+  font-weight: 700;
+}
+
+.secondary-btn,
+.ghost-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f7f9ff;
+  padding: 10px 14px;
+}
+
+.danger-btn {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+  padding: 10px 14px;
+}
+
+input[type='search'] {
+  max-width: 220px;
+}
+
+.snippet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.snippet-card {
+  background: rgba(4, 8, 20, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.snippet-card h4 {
+  margin: 0 0 4px;
+}
+
+.snippet-card p,
+.snippet-card span {
+  color: #9da8bf;
+}
+
+.snippet-card pre {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #8bd3ff;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  font-family: 'Fira Code', 'Consolas', monospace;
+}
+
+.empty-state {
+  padding: 24px;
+  text-align: center;
+  color: #9da8bf;
+}
+
+@media (max-width: 900px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar,
+  .panel-heading,
+  .snippet-card-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  input[type='search'] {
+    max-width: 100%;
+  }
+}
