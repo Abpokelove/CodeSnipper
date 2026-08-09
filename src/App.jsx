@@ -55,19 +55,27 @@ function App() {
     return unsubscribe
   }, [])
 
+  async function fetchJson(url, options) {
+    const response = await fetch(url, options).catch(() => null)
+    if (!response) {
+      throw new Error('Unable to reach the backend server.')
+    }
+
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      throw new Error(data.error || `Server error ${response.status}`)
+    }
+
+    return data
+  }
+
   async function loadSnippets(token) {
-    const response = await fetch('/api/snippets', {
+    const data = await fetchJson('/api/snippets', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
 
-    if (!response.ok) {
-      const payload = await response.json().catch(() => ({}))
-      throw new Error(payload.error || 'Unable to load snippets')
-    }
-
-    const data = await response.json()
     return data.snippets || []
   }
 
@@ -143,7 +151,7 @@ function App() {
       const url = editingId ? `/api/snippets/${editingId}` : '/api/snippets'
       const method = editingId ? 'PUT' : 'POST'
 
-      const response = await fetch(url, {
+      const data = await fetchJson(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -155,11 +163,6 @@ function App() {
           code: form.code.trim(),
         }),
       })
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Unable to save snippet')
-      }
 
       setSnippets(data.snippets || [])
       setForm(emptyForm)
@@ -187,17 +190,12 @@ function App() {
 
     try {
       const token = await getIdToken()
-      const response = await fetch(`/api/snippets/${snippetId}`, {
+      const data = await fetchJson(`/api/snippets/${snippetId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
-
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Unable to delete snippet')
-      }
 
       setSnippets(data.snippets || [])
       if (editingId === snippetId) {

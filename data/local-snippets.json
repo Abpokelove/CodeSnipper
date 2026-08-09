@@ -1,0 +1,20 @@
+{
+  "users": {
+    "M9yks57OhIdP7MBHLhp5yEOnGEl1": [
+      {
+        "id": "1786311264525",
+        "title": "React hook",
+        "description": "Snippet",
+        "code": "CODE #",
+        "createdAt": "2026-08-09T21:34:24.525Z"
+      },
+      {
+        "id": "1786310661350",
+        "title": "AB CODE",
+        "description": "Summary",
+        "code": "NEW CODE # 1234",
+        "createdAt": "2026-08-09T21:24:21.351Z"
+      }
+    ]
+  }
+}
