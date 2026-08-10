@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider } from 'firebase/auth'
+import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -16,6 +17,7 @@ const missingKeys = Object.entries(firebaseConfig)
 
 let auth = null
 let provider = null
+let db = null
 let firebaseConfigError = ''
 
 if (missingKeys.length > 0) {
@@ -25,9 +27,10 @@ if (missingKeys.length > 0) {
     const app = initializeApp(firebaseConfig)
     auth = getAuth(app)
     provider = new GoogleAuthProvider()
+    db = getFirestore(app)
   } catch (error) {
     firebaseConfigError = `Firebase initialization failed: ${error.message}`
   }
 }
 
-export { auth, provider, firebaseConfigError }
+export { auth, provider, db, firebaseConfigError }

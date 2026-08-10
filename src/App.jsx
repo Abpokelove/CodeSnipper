@@ -1,16 +1,50 @@
 import { useEffect, useMemo, useState } from 'react'
-import { auth, provider, firebaseConfigError } from './firebaseClient'
+import { auth, provider, db, firebaseConfigError } from './firebaseClient'
 import {
   signInWithPopup,
   signOut as firebaseSignOut,
   onAuthStateChanged,
 } from 'firebase/auth'
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
+  onSnapshot,
+} from 'firebase/firestore'
 
 const emptyForm = {
   title: '',
   description: '',
   code: '',
+  language: 'python',
 }
+
+const LANGUAGES = [
+  { value: 'python', label: 'Python (.py)' },
+  { value: 'javascript', label: 'JavaScript (.js)' },
+  { value: 'typescript', label: 'TypeScript (.ts)' },
+  { value: 'java', label: 'Java (.java)' },
+  { value: 'c', label: 'C (.c)' },
+  { value: 'cpp', label: 'C++ (.cpp)' },
+  { value: 'csharp', label: 'C# (.cs)' },
+  { value: 'go', label: 'Go (.go)' },
+  { value: 'rust', label: 'Rust (.rs)' },
+  { value: 'ruby', label: 'Ruby (.rb)' },
+  { value: 'php', label: 'PHP (.php)' },
+  { value: 'html', label: 'HTML (.html)' },
+  { value: 'css', label: 'CSS (.css)' },
+  { value: 'sql', label: 'SQL (.sql)' },
+  { value: 'shell', label: 'Shell (.sh)' },
+  { value: 'text', label: 'Plain Text (.txt)' },
+]
+
+// Dropbox upload URL — in dev, Vite proxies this to Flask on port 5001
+// In production, set this to the actual Flask backend URL
+const DROPBOX_API_URL = '/api/dropbox/upload'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -20,14 +54,16 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [message, setMessage] = useState('Sign in with Google to start managing your snippets.')
   const [loading, setLoading] = useState(false)
+  const [dropboxUploading, setDropboxUploading] = useState(false)
 
+  // Listen for auth state changes
   useEffect(() => {
     if (!auth) {
       setMessage(firebaseConfigError || 'Google auth is unavailable.')
       return undefined
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (!firebaseUser) {
         setUser(null)
         setSnippets([])
@@ -42,42 +78,41 @@ function App() {
       })
 
       setMessage(`Welcome back, ${firebaseUser.displayName || firebaseUser.email}!`)
-
-      try {
-        const token = await firebaseUser.getIdToken()
-        const data = await loadSnippets(token)
-        setSnippets(data)
-      } catch (error) {
-        setMessage(error.message || 'Unable to load your snippets.')
-      }
     })
 
     return unsubscribe
   }, [])
 
-  async function fetchJson(url, options) {
-    const response = await fetch(url, options).catch(() => null)
-    if (!response) {
-      throw new Error('Unable to reach the backend server.')
+  // Listen for snippets in real-time when user is signed in
+  useEffect(() => {
+    if (!user || !db) {
+      return undefined
     }
 
-    const data = await response.json().catch(() => ({}))
-    if (!response.ok) {
-      throw new Error(data.error || `Server error ${response.status}`)
-    }
+    const snippetsRef = collection(db, 'users', user.uid, 'snippets')
+    const snippetsQuery = query(snippetsRef, orderBy('createdAt', 'desc'))
 
-    return data
-  }
-
-  async function loadSnippets(token) {
-    const data = await fetchJson('/api/snippets', {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const unsubscribe = onSnapshot(
+      snippetsQuery,
+      (snapshot) => {
+        const data = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          title: docSnap.data().title || '',
+          description: docSnap.data().description || '',
+          code: docSnap.data().code || '',
+          language: docSnap.data().language || 'text',
+          createdAt: docSnap.data().createdAt || '',
+        }))
+        setSnippets(data)
       },
-    })
+      (error) => {
+        console.error('Firestore snapshot error:', error)
+        setMessage('Unable to load your snippets: ' + error.message)
+      },
+    )
 
-    return data.snippets || []
-  }
+    return unsubscribe
+  }, [user])
 
   const filteredSnippets = useMemo(() => {
     const term = searchTerm.toLowerCase()
@@ -101,9 +136,6 @@ function App() {
 
     try {
       const result = await signInWithPopup(auth, provider)
-      const token = await result.user.getIdToken()
-      const data = await loadSnippets(token)
-      setSnippets(data)
       setMessage(`Welcome, ${result.user.displayName || result.user.email}!`)
     } catch (error) {
       setMessage(error.message || 'Unable to sign in right now.')
@@ -128,15 +160,6 @@ function App() {
     }
   }
 
-  async function getIdToken() {
-    const currentUser = auth.currentUser
-    if (!currentUser) {
-      throw new Error('Please sign in first.')
-    }
-
-    return currentUser.getIdToken(true)
-  }
-
   async function handleSubmit(event) {
     event.preventDefault()
 
@@ -145,29 +168,39 @@ function App() {
       return
     }
 
+    if (!user || !db) {
+      setMessage('Please sign in first.')
+      return
+    }
+
     setLoading(true)
     try {
-      const token = await getIdToken()
-      const url = editingId ? `/api/snippets/${editingId}` : '/api/snippets'
-      const method = editingId ? 'PUT' : 'POST'
+      const snippetsRef = collection(db, 'users', user.uid, 'snippets')
 
-      const data = await fetchJson(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      if (editingId) {
+        // Update existing snippet
+        const snippetDoc = doc(db, 'users', user.uid, 'snippets', editingId)
+        await updateDoc(snippetDoc, {
           title: form.title.trim(),
           description: form.description.trim(),
           code: form.code.trim(),
-        }),
-      })
+          language: form.language,
+        })
+        setMessage('Snippet updated successfully.')
+      } else {
+        // Create new snippet
+        await addDoc(snippetsRef, {
+          title: form.title.trim(),
+          description: form.description.trim(),
+          code: form.code.trim(),
+          language: form.language,
+          createdAt: new Date().toISOString(),
+        })
+        setMessage('Snippet created successfully.')
+      }
 
-      setSnippets(data.snippets || [])
       setForm(emptyForm)
       setEditingId(null)
-      setMessage(editingId ? 'Snippet updated successfully.' : 'Snippet created successfully.')
     } catch (error) {
       setMessage(error.message || 'Something went wrong while saving your snippet.')
     } finally {
@@ -175,29 +208,25 @@ function App() {
     }
   }
 
-  async function handleEdit(snippet) {
+  function handleEdit(snippet) {
     setEditingId(snippet.id)
     setForm({
       title: snippet.title,
       description: snippet.description,
       code: snippet.code,
+      language: snippet.language || 'text',
     })
     setMessage('Editing snippet. Update the details and save when ready.')
   }
 
   async function handleDelete(snippetId) {
+    if (!user || !db) return
+
     setLoading(true)
-
     try {
-      const token = await getIdToken()
-      const data = await fetchJson(`/api/snippets/${snippetId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const snippetDoc = doc(db, 'users', user.uid, 'snippets', snippetId)
+      await deleteDoc(snippetDoc)
 
-      setSnippets(data.snippets || [])
       if (editingId === snippetId) {
         setEditingId(null)
         setForm(emptyForm)
@@ -214,6 +243,54 @@ function App() {
     setEditingId(null)
     setForm(emptyForm)
     setMessage('Form cleared.')
+  }
+
+  // ----- Dropbox Upload (Experiment 4) -----
+
+  async function uploadToDropbox(title, code, language) {
+    if (!title || !code) {
+      setMessage('Add both a title and code before uploading to Dropbox.')
+      return
+    }
+
+    setDropboxUploading(true)
+    setMessage('Uploading to Dropbox...')
+
+    try {
+      const response = await fetch(DROPBOX_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          code: code.trim(),
+          language: language || 'text',
+        }),
+      }).catch(() => null)
+
+      if (!response) {
+        throw new Error('Unable to reach the Dropbox backend. Make sure the Flask server is running on port 5001.')
+      }
+
+      const result = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(result.error || `Dropbox upload failed (status ${response.status})`)
+      }
+
+      setMessage(`File uploaded to Dropbox successfully! Stored at: ${result.dropbox_path}`)
+    } catch (error) {
+      setMessage(error.message || 'Dropbox upload failed.')
+    } finally {
+      setDropboxUploading(false)
+    }
+  }
+
+  function handleDropboxUploadFromForm() {
+    uploadToDropbox(form.title, form.code, form.language)
+  }
+
+  function handleDropboxUploadFromCard(snippet) {
+    uploadToDropbox(snippet.title, snippet.code, snippet.language || 'text')
   }
 
   return (
@@ -284,6 +361,20 @@ function App() {
                 </label>
 
                 <label>
+                  Language
+                  <select
+                    value={form.language}
+                    onChange={(event) => setForm({ ...form, language: event.target.value })}
+                  >
+                    {LANGUAGES.map((lang) => (
+                      <option key={lang.value} value={lang.value}>
+                        {lang.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
                   Code
                   <textarea
                     value={form.code}
@@ -297,6 +388,15 @@ function App() {
                 <div className="form-actions">
                   <button type="submit" className="primary-btn">
                     {editingId ? 'Update snippet' : 'Save snippet'}
+                  </button>
+                  <button
+                    type="button"
+                    className="dropbox-btn"
+                    onClick={handleDropboxUploadFromForm}
+                    disabled={dropboxUploading}
+                  >
+                    <span className="dropbox-icon">📦</span>
+                    {dropboxUploading ? 'Uploading…' : 'Save to Dropbox'}
                   </button>
                   <button type="button" className="secondary-btn" onClick={handleSignOut}>
                     Sign out
@@ -338,6 +438,14 @@ function App() {
                       <div className="card-actions">
                         <button type="button" className="ghost-btn" onClick={() => handleEdit(snippet)}>
                           Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="dropbox-btn-sm"
+                          onClick={() => handleDropboxUploadFromCard(snippet)}
+                          disabled={dropboxUploading}
+                        >
+                          📦 Dropbox
                         </button>
                         <button type="button" className="danger-btn" onClick={() => handleDelete(snippet.id)}>
                           Delete

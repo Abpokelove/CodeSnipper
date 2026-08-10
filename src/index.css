@@ -300,6 +300,85 @@ input[type='search'] {
   color: #9da8bf;
 }
 
+/* Language selector */
+select {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(4, 7, 17, 0.72);
+  color: #f4f7ff;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font: inherit;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239da8bf' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+select option {
+  background: #0a0f1e;
+  color: #f4f7ff;
+}
+
+/* Dropbox buttons */
+.dropbox-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  background: linear-gradient(135deg, #0061fe, #0d2481);
+  color: white;
+  padding: 10px 16px;
+  font-weight: 700;
+}
+
+.dropbox-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 97, 254, 0.3);
+}
+
+.dropbox-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dropbox-icon {
+  font-size: 1.1rem;
+}
+
+.dropbox-btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 180ms ease;
+  background: rgba(0, 97, 254, 0.18);
+  color: #8ec9ff;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.dropbox-btn-sm:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(0, 97, 254, 0.3);
+}
+
+.dropbox-btn-sm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-actions {
+  flex-wrap: wrap;
+}
+
 @media (max-width: 900px) {
   .content-grid {
     grid-template-columns: 1fr;
